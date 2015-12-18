@@ -12,12 +12,30 @@ func NewQuadrangle2(v []Vec2) Quadrangle2 {
 	}
 }
 
+func getT(pt, p, v Vec2) float64 {
+	return (pt.X - p.X) / v.X
+}
+
+func (q *Quadrangle2) Cross(l Line2) (crosses []Vec2) {
+	for i := 0; i < 4; i++ {
+		j := (i + 1) % 4
+		ol := NewLine2Vec(q.Vertices[i], q.Vertices[j])
+		if crossPoint, err := l.Cross(ol); err == nil {
+			pt, vec := ol.Vectors()
+			cT := getT(crossPoint, pt, vec)
+			iT := getT(q.Vertices[i], pt, vec)
+			jT := getT(q.Vertices[j], pt, vec)
+			if iT <= cT && cT <= jT || jT <= cT && cT <= iT {
+				crosses = append(crosses, crossPoint)
+			}
+		}
+	}
+	return
+}
+
 func (q *Quadrangle2) HasPoint(p Vec2) bool {
 	for k := 0; k < 4; k++ {
-		l := k + 1
-		if l == 4 {
-			l = 0
-		}
+		l := (k + 1) % 4
 		norm := Vec2{
 			q.Vertices[l].Y - q.Vertices[k].Y,
 			q.Vertices[k].X - q.Vertices[l].X,

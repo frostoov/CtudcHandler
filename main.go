@@ -82,12 +82,12 @@ func ctudcReader(dirname string) (<-chan trek.Event, error) {
 	return c, nil
 }
 
-func nevodReader(dirname string) (<-chan nevod.NevodEvent, error) {
+func nevodReader(dirname string) (<-chan nevod.Event, error) {
 	fileList, err := ioutil.ReadDir(dirname)
 	if err != nil {
 		return nil, err
 	}
-	c := make(chan nevod.NevodEvent)
+	c := make(chan nevod.Event)
 	go func() {
 		for _, fileStat := range fileList {
 			if filepath.Ext(fileStat.Name()) != ".nad" {
@@ -211,19 +211,19 @@ func merge() {
 				}
 			}
 
-			for nevodEvent, ok := <-nevodStream; ok; nevodEvent, ok = <-nevodStream {
-				if nrun != uint(nevodEvent.Meta.Nrun) {
+			for event, ok := <-nevodStream; ok; event, ok = <-nevodStream {
+				if nrun != uint(event.Meta.Nrun) {
 					panic("OOps!! invalid run number!! data is corrupted")
 				}
-				if nevent == uint(nevodEvent.Meta.Nevent) {
+				if nevent == uint(event.Meta.Nevent) {
 					extEvent := trek.ExtEvent{
 						Ctudc: ctudcEvent,
-						Nevod: nevodEvent.Meta,
+						Nevod: event.Meta,
 						Decor: decor,
 					}
 					extEvent.Marshal(w)
 					break
-				} else if uint(nevodEvent.Meta.Nevent) > nevent {
+				} else if uint(event.Meta.Nevent) > nevent {
 					break
 				}
 			}

@@ -5,28 +5,32 @@ import (
 	"math"
 )
 
-// ChamberDesc содержит описание дрейфовой камеры
+// ChamberDesc содержит описание дрейфовой камеры.
 type ChamberDesc struct {
-	//Точки дрейфовой камеры
+	//Точки дрейфовой камеры.
 	Points [3]geo.Vec3 `json:"points"`
-	//Оффсет времен дрейфа для каждой проволки
+	//Оффсет времен дрейфа для каждой проволки.
 	Offsets [4]uint `json:"offsets"`
-	//Скорость дрейфа для каждой проволки
+	//Скорость дрейфа для каждой проволки.
 	Speeds [4]float64 `json:"speeds"`
-	//Номер плоскости дрейфовой камеры
+	//Номер плоскости дрейфовой камеры.
 	Plane uint `json:"plane"`
-	//Номер группы дрейфовой камеры
+	//Номер группы дрейфовой камеры.
 	Group uint `json:"group"`
-	//Номер камеры
+	//Номер камеры.
 	Number uint `json:"number"`
 }
 
-// TrackDesc содержит описание реконструированного трека
+// TrackDesc содержит описание реконструированного трека.
 type TrackDesc struct {
-	Line      geo.Line2   //Прямая трека
-	Points    [4]geo.Vec2 //Точки, по которым был восстановлен трека
-	Deviation float64     //Отклонение прямой
-	Times     [4]uint     //Вермена с TDC
+	// Прямая трека.
+	Line geo.Line2
+	// Точки, по которым был восстановлен трека.
+	Points [4]geo.Vec2
+	// Отклонение прямой.
+	Deviation float64
+	// Вермена с TDC.
+	Times [4]uint
 }
 
 const (
@@ -35,14 +39,14 @@ const (
 	chamberLength = 4000
 )
 
-// Chamber представляет дрейфовую камеру
+// Chamber представляет дрейфовую камеру.
 type Chamber struct {
 	desc  ChamberDesc
 	coord geo.CoordSystem
 	hex   geo.Hexahedron
 }
 
-// NewChamber создает Chamber по описанию chamDesc
+// NewChamber создает Chamber по описанию chamDesc.
 func NewChamber(chamDesc ChamberDesc) *Chamber {
 	return &Chamber{
 		desc:  chamDesc,
@@ -51,53 +55,58 @@ func NewChamber(chamDesc ChamberDesc) *Chamber {
 	}
 }
 
-// LineProjection проецирует прямую на фронтальную плоскость камеры
+// LineProjection проецирует прямую на фронтальную плоскость камеры.
 func (c *Chamber) LineProjection(l geo.Line3) geo.Line2 {
 	l = c.coord.ConvertLine(l)
-	return geo.NewLine2Vec(geo.Vec2{l.Point.X, l.Point.Y}, geo.Vec2{l.Vector.X, l.Vector.Y})
+	return geo.NewLine2Vec(geo.Vec2{X: l.Point.X, Y: l.Point.Y}, geo.Vec2{X: l.Vector.X, Y: l.Vector.Y})
 }
 
-// CreateTrack реконструирует трек по измерениям с камеры
+// CreateTrack реконструирует трек по измерениям с камеры.
 func (c *Chamber) CreateTrack(times *ChamTimes) *TrackDesc {
 	return mkTrackDesc(times, &c.desc)
 }
 
-// Hexahendron возвращает геометрическое представление камеры
+// Hexahendron возвращает геометрическое представление камеры.
 func (c *Chamber) Hexahendron() *geo.Hexahedron {
 	return &c.hex
 }
 
-// Number возвращает номер камеры
+// Number возвращает номер камеры.
 func (c *Chamber) Number() uint {
 	return c.desc.Number
 }
 
-// Plane возвращает номер плоскости камеры
+// Plane возвращает номер плоскости камеры.
 func (c *Chamber) Plane() uint {
 	return c.desc.Plane
 }
 
-// Group возвращает номер группы камеры
+// Group возвращает номер группы камеры.
 func (c *Chamber) Group() uint {
 	return c.desc.Group
 }
 
+// Offsets возвращает оффсеты для каждой проволки камеры.
 func (c *Chamber) Offsets() []uint {
 	return c.desc.Offsets[:]
 }
 
+// Speeds возвращает скорости дрейфа для каждой проволки камеры.
 func (c *Chamber) Speeds() []float64 {
 	return c.desc.Speeds[:]
 }
 
+// Width возвращает ширину дрейфовой камеры.
 func (c *Chamber) Width() float64 {
 	return chamberWidth
 }
 
+// Height возвращает высоту дрейфовой камеры.
 func (c *Chamber) Height() float64 {
 	return chamberHeight
 }
 
+// Length возвращает длину дрейфовой камеры.
 func (c *Chamber) Length() float64 {
 	return chamberLength
 }
@@ -136,8 +145,13 @@ var wires = [4]geo.Vec2{
 	geo.Vec2{X: 71, Y: -0.75},
 }
 
+// ChamDists содержит длины дрейфа в одной камеры в формате [wire][row]dist.
 type ChamDists [4][]float64
+
+// TrackDists содержит длины дрейфа частиц по которым был востановлен трек.
 type TrackDists [4]float64
+
+// TrackTimes содержит измерения по которым был востановлен трек.
 type TrackTimes [4]uint
 
 func mkTrackDesc(times *ChamTimes, chamDesc *ChamberDesc) *TrackDesc {

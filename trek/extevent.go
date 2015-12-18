@@ -6,7 +6,7 @@ import (
 	"io"
 )
 
-// DecorTrack содержит данные о треке ДЕКОР
+// DecorTrack содержит данные о треке ДЕКОР.
 type DecorTrack struct {
 	//Тип трека: 0 - long, 1 - ShSh
 	Type int8
@@ -14,7 +14,7 @@ type DecorTrack struct {
 	Track math.Line3
 }
 
-// ExtEvent содержит данные о событии с КТУДК, ДЕКОР и НЕВОД
+// ExtEvent содержит данные о событии с КТУДК, ДЕКОР и НЕВОД.
 type ExtEvent struct {
 	// Данные КТУДК
 	Ctudc Event
@@ -44,7 +44,7 @@ type ExtEvent struct {
 	Decor []DecorTrack
 }
 
-// Marshal осуществляет бинарный маршалинг события в w
+// Marshal осуществляет бинарный маршалинг события в w.
 func (e *ExtEvent) Marshal(w io.Writer) error {
 	if err := e.Ctudc.Marshal(w); err != nil {
 		return err
@@ -61,7 +61,7 @@ func (e *ExtEvent) Marshal(w io.Writer) error {
 	return nil
 }
 
-// Unmarshal осуществляет бинарный анмаршалинг события из r
+// Unmarshal осуществляет бинарный анмаршалинг события из r.
 func (e *ExtEvent) Unmarshal(r io.Reader) error {
 	if err := e.Ctudc.Unmarshal(r); err != nil {
 		return err
