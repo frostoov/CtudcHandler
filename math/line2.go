@@ -2,48 +2,75 @@ package math
 
 import (
 	"errors"
-	"math"
 )
 
-//Line2 представляет линию в двухмерном простарнстве (Y = K*X + B).
+//Line2 представляет линию в двухмерном простарнстве ( Ortho*r + Dist = 0).
 type Line2 struct {
-	K, B float64
+	Ortho Vec2
+	Dist  float64
+}
+
+//NewLine2 создает линию по вектору orth и числу dist (ortho*r + dist = 0)
+func NewLine2(orth Vec2, dist float64) Line2 {
+	return Line2{
+		Ortho: orth,
+		Dist:  dist,
+	}
+}
+
+//NewLine2KB создает линию по числа k и b (y=k*x+b)
+func NewLine2KB(k, b float64) Line2 {
+	ortho := Vec2{X: -k, Y: 1}.Ort()
+	dist := ortho.Y * b
+	return Line2{
+		Ortho: ortho,
+		Dist:  dist,
+	}
 }
 
 //NewLine2Points создает Line2 по двум точкам, через которые проходит прямая.
 func NewLine2Points(pt1, pt2 Vec2) Line2 {
 	vec := pt1.Sub(pt2)
-	k := math.Inf(1)
-	if vec.X != 0 {
-		k = vec.Y / vec.X
+
+	orth := vec.Ortho().Ort()
+	dist := -orth.Dot(pt2)
+	return Line2{
+		Ortho: orth,
+		Dist:  dist,
 	}
-	b := pt1.Y - k*pt1.X
-	return Line2{k, b}
 }
 
 //NewLine2Vec создает Line2 по точке pt, через которую проходит прямая, и напаравляющему вектору vec прямой.
 func NewLine2Vec(pt, vec Vec2) Line2 {
-	k := vec.Y / vec.X
-	b := pt.Y - k*pt.X
-	return Line2{k, b}
+	orth := vec.Ortho().Ort()
+	dist := -orth.Dot(pt)
+	return Line2{
+		Ortho: orth,
+		Dist:  dist,
+	}
 }
 
 //Cross возращает точку пересечения прямых l и ol.
 func (l *Line2) Cross(ol Line2) (Vec2, error) {
-	if l.K == ol.K {
+	t := ol.Ortho.Y - ol.Ortho.X/l.Ortho.X*l.Ortho.Y
+	if t == 0 {
 		return Vec2{0, 0}, errors.New("Dummy")
 	}
-	if l.B != ol.B {
-		x := (l.K - ol.K) / (ol.B - l.B)
-		y := l.K*x + l.B
-		return Vec2{x, y}, nil
-	}
-	return Vec2{0, 0}, nil
+	y := -(ol.Ortho.X/l.Ortho.X*l.Dist + ol.Dist) / t
+	x := (l.Dist - l.Ortho.Y*y) / l.Ortho.X
+	return Vec2{X: x, Y: y}, nil
 }
 
 //Vectors возращает точку, через которую проходит l, и напаравляющий вектор l.
 func (l *Line2) Vectors() (point Vec2, vector Vec2) {
-	vector = Vec2{1, l.K}.Ort()
-	point = Vec2{0, l.B}
+	vector = l.Ortho.Ortho().Ort()
+	switch {
+	case l.Ortho.Y != 0:
+		point = Vec2{X: 0, Y: -l.Dist / l.Ortho.Y}
+	case l.Ortho.X != 0:
+		point = Vec2{Y: 0, X: -l.Dist / l.Ortho.X}
+	default:
+		panic("Vectors null vector")
+	}
 	return
 }

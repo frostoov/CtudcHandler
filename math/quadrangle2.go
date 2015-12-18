@@ -13,13 +13,19 @@ func NewQuadrangle2(v []Vec2) Quadrangle2 {
 }
 
 func getT(pt, p, v Vec2) float64 {
-	return (pt.X - p.X) / v.X
+	switch {
+	case v.X != 0:
+		return (pt.X - p.X) / v.X
+	case v.Y != 0:
+		return (pt.Y - p.Y) / v.Y
+	}
+	panic("getT null vector")
 }
 
 func (q *Quadrangle2) Cross(l Line2) (crosses []Vec2) {
 	for i := 0; i < 4; i++ {
 		j := (i + 1) % 4
-		ol := NewLine2Vec(q.Vertices[i], q.Vertices[j])
+		ol := NewLine2Points(q.Vertices[i], q.Vertices[j])
 		if crossPoint, err := l.Cross(ol); err == nil {
 			pt, vec := ol.Vectors()
 			cT := getT(crossPoint, pt, vec)

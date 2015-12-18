@@ -40,3 +40,10 @@ func (v Vec2) Ort() Vec2 {
 func (v Vec2) String() string {
 	return fmt.Sprintf("(%f, %f)", v.X, v.Y)
 }
+
+func (v Vec2) Ortho() Vec2 {
+	return Vec2{
+		X: v.Y,
+		Y: -v.X,
+	}
+}
