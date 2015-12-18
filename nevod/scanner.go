@@ -8,7 +8,7 @@ import (
 type Scanner struct {
 	reader io.ReadSeeker
 
-	nevodData NevodEvent
+	nevodData Event
 	header    RecordHeader
 	decorData StrDecor
 
@@ -21,7 +21,7 @@ func NewScanner(r io.ReadSeeker) *Scanner {
 	}
 }
 
-func (s *Scanner) Record() *NevodEvent {
+func (s *Scanner) Record() *Event {
 	return &s.nevodData
 }
 
@@ -37,11 +37,11 @@ func (s *Scanner) Scan() (success bool) {
 		}
 
 		switch s.header.RecType {
-		case HDR_W:
+		case hdr:
 			{
 				recordType := s.header.DataLen
 				switch recordType {
-				case ID_CONFIG:
+				case idConfig:
 					if err := binary.Read(s.reader, binary.LittleEndian, &s.decorData.ConfCntr); err != nil {
 						s.setError(err)
 						return
@@ -54,7 +54,7 @@ func (s *Scanner) Scan() (success bool) {
 						s.setError(err)
 						return
 					}
-				case ID_MONIT:
+				case idMonit:
 					if err := binary.Read(s.reader, binary.LittleEndian, &s.decorData.ConfMonit); err != nil {
 						s.setError(err)
 						return
@@ -63,7 +63,7 @@ func (s *Scanner) Scan() (success bool) {
 						s.setError(err)
 						return
 					}
-				case ID_NOISE:
+				case idNoise:
 					if err := binary.Read(s.reader, binary.LittleEndian, &s.decorData.Counter); err != nil {
 						s.setError(err)
 						return
@@ -72,7 +72,7 @@ func (s *Scanner) Scan() (success bool) {
 						s.setError(err)
 						return
 					}
-					if err := binary.Read(s.reader, binary.LittleEndian, &s.decorData.IdCnoise); err != nil {
+					if err := binary.Read(s.reader, binary.LittleEndian, &s.decorData.IDcnoise); err != nil {
 						s.setError(err)
 						return
 					}
@@ -86,7 +86,7 @@ func (s *Scanner) Scan() (success bool) {
 					}
 				}
 			}
-		case EVENT_W:
+		case recordEvent:
 			if err := s.nevodData.Unmarshal(s.reader); err != nil {
 				s.setError(err)
 				return
@@ -113,7 +113,7 @@ func (s *Scanner) Scan() (success bool) {
 		default:
 			if _, err := s.reader.Seek(int64(s.header.DataLen), 1); err != nil {
 				s.setError(err)
-						return
+				return
 			}
 		}
 		var bstop [4]uint8

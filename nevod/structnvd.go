@@ -6,29 +6,29 @@ import (
 )
 
 const (
-	//HDR_W Для записи конфигурации и мониторинга ДЕКОР
-	HDR_W = 0
-	//ID_CONFIG Конфигурация ДЕКОР
-	ID_CONFIG = 0
-	//ID_MONIT Мониторинг ДЕКОР
-	ID_MONIT = 1
-	//ID_EVENT Не используется
-	ID_EVENT = 2
-	//ID_NOISE Шумы ДЕКОР
-	ID_NOISE        = 3
-	CFGNVD_W        = 1
-	MONPDS_W        = 2
-	MONPDSL_W       = 3
-	MONAMPL_W       = 4
-	MONSHUMTV_W     = 5
-	MONBEK_W        = 6
-	EVENT_W         = 7
-	MONPDS_SCT_W    = 8
-	MONSHUMTV_SCT_W = 9
-	MONBEP_W        = 10
+	//hdr Для записи конфигурации и мониторинга ДЕКОР
+	hdr = 0
+	//idConfig Конфигурация ДЕКОР
+	idConfig = 0
+	//idMonit Мониторинг ДЕКОР
+	idMonit = 1
+	//idMonit Не используется
+	idEvent = 2
+	//idNoise Шумы ДЕКОР
+	idNoise      = 3
+	confNvd      = 1
+	monpds       = 2
+	monpdsl      = 3
+	monAmpl      = 4
+	monShumTv    = 5
+	monBek       = 6
+	recordEvent  = 7
+	monpdsSct    = 8
+	monShumTvSct = 9
+	monBep       = 10
 )
 
-//TDateTimeKadr Структура для хранения даты и времени
+// DateTime Структура для хранения даты и времени
 type DateTime struct {
 	Hsecond uint8
 	Second  uint8
@@ -39,7 +39,7 @@ type DateTime struct {
 	Year    uint16
 }
 
-//SMonADC Данные мониторинга одного БЭКа
+// SMonADC Данные мониторинга одного БЭКа
 type SMonADC struct {
 	ToSave  uint16           //Флаг наличия новых данных, 1 - надо их сохранить.
 	Date    DateTime         //Дата и Время измерения (UTC)
@@ -50,7 +50,7 @@ type SMonADC struct {
 	Sigma   [4][6][2]float32 //[ksm][pmt][dinod12, dinod9] сигма пьедесталов
 }
 
-//SMonShumTV
+//SMonShumTV TODO
 type SMonShumTV struct {
 	ToSave   uint16        //Флаг наличия новых данных, 1 - надо их сохранить.
 	Date     DateTime      //Дата и Время измерения (UTC)
@@ -60,7 +60,7 @@ type SMonShumTV struct {
 	Vbek     [5]float32    //Напряжения  в БЭК: V1,V2,Vcc,V3,V4
 }
 
-//SMonBek
+//SMonBek TODO
 type SMonBek struct {
 	ToSave   uint16    //Флаг наличия новых данных, 1 - надо их сохранить.
 	Date     DateTime  //Время измерения шумов триггеров(UTC)
@@ -72,9 +72,9 @@ type SMonBek struct {
 	NoiseTrC [4]uint16 //[ksm] Шумы триггерного сигнала C
 }
 
-//SEvtBek
+//SEvtBek TODO
 type SEvtBek struct {
-	IdBek    [2]int16        //[0]-Индикатор запроса данных события данного БЭК, [1]- КСМ(0) или СКТ(1)
+	IDbek    [2]int16        //[0]-Индикатор запроса данных события данного БЭК, [1]- КСМ(0) или СКТ(1)
 	MaskKSM  int16           //Маска используемых KSM
 	MaskHit  [4]int16        //[ksm] маска сработавших ФЭУ
 	Acp      [4][6][2]uint16 //[ksm][pmt][12d,9d] Коды АЦП
@@ -95,7 +95,7 @@ type SMonAdcSct struct {
 	Sigma   [8][5]float32 //[ksm][pmt] сигма пьедесталов
 }
 
-//SMonShumTvSct
+//SMonShumTvSct TODO
 type SMonShumTvSct struct {
 	ToSave   uint16        //Флаг наличия новых данных, 1 - надо их сохранить.
 	Date     DateTime      //Дата и Время измерения (UTC)
@@ -105,7 +105,7 @@ type SMonShumTvSct struct {
 	Vbek     [5]float32    //Напряжения  в БЭК: V1,V2,Vcc,V3,V4
 }
 
-//SMonBep
+//SMonBep TODO
 type SMonBep struct {
 	ToSave     uint16       //Флаг наличия новых данных, 1 - надо их сохранить.
 	Date       DateTime     //Время измерения шумов триггеров(UTC)
@@ -113,9 +113,9 @@ type SMonBep struct {
 	NoiseTrSCT [8][5]uint16 //[ksm][pmt] Шумы триггерного сигнала СКТ
 }
 
-//SEvtBep
+//SEvtBep TODO
 type SEvtBep struct {
-	IdBek    [2]int16     //[0]-Индикатор запроса данных события данного БЭП, [1]- КСМ(0) или СКТ(1)
+	IDbek    [2]int16     //[0]-Индикатор запроса данных события данного БЭП, [1]- КСМ(0) или СКТ(1)
 	MaskKsm  int16        //Маска используемых KSM
 	MaskHit  [8]uint8     //[ksm] маска сработавших ФЭУ
 	Acp      [8][5]uint16 //[ksm][pmt] Коды АЦП
@@ -123,7 +123,7 @@ type SEvtBep struct {
 	MaskTrig [8]uint8     //[ksm] битовая маска, участвовавших в триггере СКТ счётчиков
 }
 
-//HEADER_REC Заголовок записи NAD
+//RecordHeader Заголовок записи NAD
 type RecordHeader struct {
 	Start   [5]uint8 // слово "start" - метка начала записи.
 	RecType uint8    //тип записи: 0,1 - конфигурация НЕВОДа. 2,3,4,5,6 - данные мониторирования НЕВОДа. 7 - данные события.
@@ -131,21 +131,22 @@ type RecordHeader struct {
 	DataLen uint32   //Длина следующих за зоголовком данных в байтах
 }
 
-//SCONFIG_DAT Или для ДЕКОР при tip_zap==0 идентификатор ID_CONFIG...ID_NOISE
-type SCONFIG_DAT struct {
-	ConfBek  [32]ConfBek   //Конфигурация БЭК в НЕВОДе
-	ConfTrig [8]CONFIG_TRG //Конфигурация триггерных плат
-	ConfBep  [2]ConfBep    //Конфигурация БЭП в НЕВОДе
+//ConfigDat Или для ДЕКОР при tip_zap==0 идентификатор idConfig...idNoise
+type ConfigDat struct {
+	ConfBek  [32]ConfBek      //Конфигурация БЭК в НЕВОДе
+	ConfTrig [8]TriggerConfig //Конфигурация триггерных плат
+	ConfBep  [2]ConfBep       //Конфигурация БЭП в НЕВОДе
 }
 
-type SMONIT_DAT struct {
+// MonitDat TODO
+type MonitDat struct {
 	MaskBek uint        //битовая Маска присутствующих в данных БЭК или БЭП
 	Nbek    int16       //Количество присутствующих в данных БЭК или БЭП
 	MonPds  [32]SMonADC //Результаты мониторинга пьедесталов БЭК
 }
 
-//NevodEvent
-type NevodEvent struct {
+//NevodEvent TODO
+type Event struct {
 	Meta struct {
 		Nevent      uint32       // номер события.
 		Nrun        uint32       // номер рана.
@@ -171,7 +172,8 @@ type NevodEvent struct {
 	EventBep [2]SEvtBep  //Комбинированные данные одного события от БЭП
 }
 
-func (e *NevodEvent) Unmarshal(r io.Reader) error {
+// Unmarshal совершает бинарный анмаршалинг собутия e
+func (e *Event) Unmarshal(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &e.Meta); err != nil {
 		return err
 	}

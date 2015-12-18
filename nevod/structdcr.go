@@ -1,8 +1,8 @@
 package nevod
 
 import (
-	"io"
 	"encoding/binary"
+	"io"
 )
 
 const (
@@ -122,7 +122,7 @@ type StrDecor struct {
 	PmConfig       int16        // требуемая конфигурация сети
 	PmWork         int16        // Битовая маска рабочих машин
 	PmExp          int16        // битовая маска участвующих в эксперименте PM
-	IdCinit        [MAXPM]int16 // индикатор наличия данных
+	IDcinit        [MAXPM]int16 // индикатор наличия данных
 	LenCinit       [MAXPM]int16 // длина данных
 	Cinit          [MAXPM]ConfPm
 	Nrun           int32            // Номер запуска программы
@@ -133,10 +133,10 @@ type StrDecor struct {
 	CmonitAll      CMonitorAll
 	Counter        [2][8]uint16 //шумы триггеров за 1 сек
 	ConfNoise      uint32       // маска контроллеров по шумам
-	IdCnoise       [MAXPM]int16 // индикатор наличия данных
+	IDcnoise       [MAXPM]int16 // индикатор наличия данных
 	LenCnoise      [MAXPM]int16 // длина данных
 	Cnoise         [MAXPM]CNoise
-	ConfEvent      uint32    // маска опрашиваемых контроллеров по событию
-	LenCeventAll   int16     // длина данных
+	ConfEvent      uint32     // маска опрашиваемых контроллеров по событию
+	LenCeventAll   int16      // длина данных
 	CeventAll      DecorEvent // Структура одного события ДЕКОРа
 }
