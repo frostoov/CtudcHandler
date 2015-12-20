@@ -17,6 +17,17 @@ type Event struct {
 	hits   []Hit
 }
 
+func (e *Event) Copy() Event {
+	hits := make([]Hit, len(e.hits))
+	copy(hits, e.hits)
+	return Event{
+		nRun:   e.nRun,
+		nEvent: e.nEvent,
+		time:   e.time,
+		hits:   hits,
+	}
+}
+
 // Nrun возвращает номер рана события КТУДК.
 func (e *Event) Nrun() uint {
 	return uint(e.nRun)
@@ -37,8 +48,8 @@ func (e *Event) Hits() []Hit {
 	return e.hits
 }
 
-// TrekTimes возвращает измерения со всей установки в формате [chamber]*ChamTimes.
-func (e *Event) TrekTimes() map[uint]*ChamTimes {
+// Times возвращает измерения со всей установки в формате [chamber]*ChamTimes.
+func (e *Event) Times() map[uint]*ChamTimes {
 	times := make(map[uint]*ChamTimes)
 	for _, h := range e.hits {
 		if times[h.Chamber()] == nil {
@@ -47,6 +58,17 @@ func (e *Event) TrekTimes() map[uint]*ChamTimes {
 		times[h.Chamber()][h.Wire()] = append(times[h.Chamber()][h.Wire()], h.Time())
 	}
 	return times
+}
+
+// ChamberTimes возвращает измерения с камеры cham.
+func (e *Event) ChamberTimes(cham uint) *ChamTimes {
+	var times ChamTimes
+	for _, h := range e.hits {
+		if h.Chamber() == cham {
+			times[h.Wire()] = append(times[h.Wire()], h.Time())
+		}
+	}
+	return &times
 }
 
 // TriggeredChambers возвращает множество всех сработавших камер.
@@ -95,7 +117,7 @@ func (e *Event) Unmarshal(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &size); err != nil {
 		return err
 	}
-	if cap(e.hits) > int(size) {
+	if int(size) < cap(e.hits) {
 		e.hits = e.hits[:size]
 	} else {
 		e.hits = make([]Hit, int(size))

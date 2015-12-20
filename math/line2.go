@@ -74,3 +74,11 @@ func (l *Line2) Vectors() (point Vec2, vector Vec2) {
 	}
 	return
 }
+
+func (l *Line2) K() float64 {
+	return -l.Ortho.X / l.Ortho.Y
+}
+
+func (l *Line2) B() float64 {
+	return l.Dist / l.Ortho.Y
+}

@@ -145,29 +145,32 @@ type MonitDat struct {
 	MonPds  [32]SMonADC //Результаты мониторинга пьедесталов БЭК
 }
 
-//NevodEvent TODO
+// EventMeta TODO
+type EventMeta struct {
+	Nevent      uint32       // номер события.
+	Nrun        uint32       // номер рана.
+	TrigNvd     uint16       // Триггеры НЕВОДа
+	Nlam        int16        // кол-во сработавших модулей.
+	NlamSKT     int16        // кол-во сработавших модулей СКТ.
+	NfifoA      int16        // кол-во модулей с FIFO TrA.
+	NfifoB      int16        // кол-во модулей с FIFO TrB.
+	NfifoC      int16        // кол-во модулей с FIFO TrC.
+	NfifoSKT    int16        // кол-во модулей с FIFO TrSKT.
+	WaitTime    uint32       // время ожидания этого события в 100 нсек.
+	AllTime     [2]uint32    //- [0]=10000000; 100 нсек генератор тиков
+	Pressure    uint32       //Давление
+	Temperature uint32       //Температура
+	IDDecor     uint32       //Признак наличия в данных ДЕКОРа (резерв)
+	StatusReg   [8][2]uint16 //Содержимое статусных регистров без купюр
+	MaskBek     uint32       // битовая Маска присутствующих в данных БЭК
+	MaskBep     uint32       // битовая Маска присутствующих в данных БЭП (только два первых бита)
+	Nbek        int16        //Количество присутствующих в данных БЭК (до 30 без БЭП)
+	Nbep        int16        //Количество присутствующих в данных БЭП (до 2)
+}
+
+// Event TODO
 type Event struct {
-	Meta struct {
-		Nevent      uint32       // номер события.
-		Nrun        uint32       // номер рана.
-		TrigNvd     uint16       // Триггеры НЕВОДа
-		Nlam        int16        // кол-во сработавших модулей.
-		NlamSKT     int16        // кол-во сработавших модулей СКТ.
-		NfifoA      int16        // кол-во модулей с FIFO TrA.
-		NfifoB      int16        // кол-во модулей с FIFO TrB.
-		NfifoC      int16        // кол-во модулей с FIFO TrC.
-		NfifoSKT    int16        // кол-во модулей с FIFO TrSKT.
-		WaitTime    uint32       // время ожидания этого события в 100 нсек.
-		AllTime     [2]uint32    //- [0]=10000000; 100 нсек генератор тиков
-		Pressure    uint32       //Давление
-		Temperature uint32       //Температура
-		IDDecor     uint32       //Признак наличия в данных ДЕКОРа (резерв)
-		StatusReg   [8][2]uint16 //Содержимое статусных регистров без купюр
-		MaskBek     uint32       // битовая Маска присутствующих в данных БЭК
-		MaskBep     uint32       // битовая Маска присутствующих в данных БЭП (только два первых бита)
-		Nbek        int16        //Количество присутствующих в данных БЭК (до 30 без БЭП)
-		Nbep        int16        //Количество присутствующих в данных БЭП (до 2)
-	}
+	Meta     EventMeta
 	EventBek [32]SEvtBek //Комбинированные данные одного события от БЭК
 	EventBep [2]SEvtBep  //Комбинированные данные одного события от БЭП
 }

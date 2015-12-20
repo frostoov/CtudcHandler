@@ -1,8 +1,9 @@
 package trek
 
 import (
-	geo "github.com/frostoov/CtudcHandler/math"
 	"math"
+
+	geo "github.com/frostoov/CtudcHandler/math"
 )
 
 // ChamberDesc содержит описание дрейфовой камеры.
@@ -265,12 +266,13 @@ func leastSquares(pts []geo.Vec2, line *geo.Line2) float64 {
 	l := float64(len(pts))
 	exp := l*sumXX - sumX*sumX
 	if exp != 0 && math.Abs(exp) > 1e-60 {
-		line.K = (l*sumXY - sumX*sumY) / exp
-		line.B = (sumY - line.K*sumX) / l
+		k := (l*sumXY - sumX*sumY) / exp
+		b := (sumY - k*sumX) / l
 		dev := 0.0
 		for i := range pts {
-			dev += math.Pow((line.K*pts[i].X+line.B)-pts[i].Y, 2)
+			dev += math.Pow((k*pts[i].X+b)-pts[i].Y, 2)
 		}
+		*line = geo.NewLine2KB(k, b)
 		return dev
 	}
 	return -1
@@ -307,7 +309,7 @@ func systemError(desc *TrackDesc) bool {
 		default:
 			return false
 		}
-		desc.Points[i].Y += trackSign * getSystemError(r, math.Atan(desc.Line.K))
+		desc.Points[i].Y += trackSign * getSystemError(r, math.Atan(desc.Line.K()))
 	}
 	desc.Deviation = leastSquares(desc.Points[:], &desc.Line)
 	return true
