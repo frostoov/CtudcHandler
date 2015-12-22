@@ -1,6 +1,7 @@
 package trek
 
 import (
+	"fmt"
 	"math"
 
 	geo "github.com/frostoov/CtudcHandler/math"
@@ -14,12 +15,14 @@ type ChamberDesc struct {
 	Offsets [4]uint `json:"offsets"`
 	//Скорость дрейфа для каждой проволки.
 	Speeds [4]float64 `json:"speeds"`
+	//Координаты проволок в системе координат камеры
+	Wires [4]geo.Vec2 `json:"wires"`
 	//Номер плоскости дрейфовой камеры.
-	Plane uint `json:"plane"`
+	Plane int `json:"plane"`
 	//Номер группы дрейфовой камеры.
-	Group uint `json:"group"`
+	Group int `json:"group"`
 	//Номер камеры.
-	Number uint `json:"number"`
+	Number int `json:"number"`
 }
 
 // TrackDesc содержит описание реконструированного трека.
@@ -59,12 +62,30 @@ func NewChamber(chamDesc ChamberDesc) *Chamber {
 // LineProjection проецирует прямую на фронтальную плоскость камеры.
 func (c *Chamber) LineProjection(l geo.Line3) geo.Line2 {
 	l = c.coord.ConvertLine(l)
+	fmt.Println(l)
 	return geo.NewLine2Vec(geo.Vec2{X: l.Point.X, Y: l.Point.Y}, geo.Vec2{X: l.Vector.X, Y: l.Vector.Y})
+}
+
+// TimesDepth возвращает наименьшую "глубину" измерений для 4 проволок.
+func (c *Chamber) TimesDepth(times *ChamTimes) int {
+	depth := math.MaxInt64
+	for wire := range times {
+		wireDepth := 0
+		for _, t := range times[wire] {
+			if c.isTimeGood(wire, t) {
+				wireDepth++
+			}
+		}
+		if wireDepth < depth {
+			depth = wireDepth
+		}
+	}
+	return depth
 }
 
 // CreateTrack реконструирует трек по измерениям с камеры.
 func (c *Chamber) CreateTrack(times *ChamTimes) *TrackDesc {
-	return mkTrackDesc(times, &c.desc)
+	return c.mkTrackDesc(times)
 }
 
 // Hexahendron возвращает геометрическое представление камеры.
@@ -73,17 +94,17 @@ func (c *Chamber) Hexahendron() *geo.Hexahedron {
 }
 
 // Number возвращает номер камеры.
-func (c *Chamber) Number() uint {
+func (c *Chamber) Number() int {
 	return c.desc.Number
 }
 
 // Plane возвращает номер плоскости камеры.
-func (c *Chamber) Plane() uint {
+func (c *Chamber) Plane() int {
 	return c.desc.Plane
 }
 
 // Group возвращает номер группы камеры.
-func (c *Chamber) Group() uint {
+func (c *Chamber) Group() int {
 	return c.desc.Group
 }
 
@@ -115,7 +136,7 @@ func (c *Chamber) Length() float64 {
 func mkChamberCoord(pts []geo.Vec3) geo.CoordSystem {
 	ox := pts[1].Sub(pts[0]).Ort()
 	oz := pts[2].Sub(pts[0]).Ort()
-	oy := ox.Cross(oz)
+	oy := ox.Cross(oz).Ort()
 	return geo.NewCoordSystem(pts[0], ox, oy, oz)
 }
 
@@ -139,12 +160,12 @@ func mkChamberHexahedron(pts []geo.Vec3) geo.Hexahedron {
 	return geo.NewHexahedron(vertices)
 }
 
-var wires = [4]geo.Vec2{
-	geo.Vec2{X: 41, Y: 0.75},
-	geo.Vec2{X: 51, Y: -0.75},
-	geo.Vec2{X: 61, Y: 0.75},
-	geo.Vec2{X: 71, Y: -0.75},
-}
+// var wires = [4]geo.Vec2{
+// 	geo.Vec2{X: 41, Y: 0.75},
+// 	geo.Vec2{X: 51, Y: -0.75},
+// 	geo.Vec2{X: 61, Y: 0.75},
+// 	geo.Vec2{X: 71, Y: -0.75},
+// }
 
 // ChamDists содержит длины дрейфа в одной камеры в формате [wire][row]dist.
 type ChamDists [4][]float64
@@ -155,39 +176,40 @@ type TrackDists [4]float64
 // TrackTimes содержит измерения по которым был востановлен трек.
 type TrackTimes [4]uint
 
-func mkTrackDesc(times *ChamTimes, chamDesc *ChamberDesc) *TrackDesc {
-	dists := mkChamDists(times, chamDesc)
-	depth := getDepth(dists)
-	if depth != uint(1) {
+func (c *Chamber) mkTrackDesc(times *ChamTimes) *TrackDesc {
+	depth := c.TimesDepth(times)
+	if depth != 1 {
 		return nil
 	}
+	dists := mkChamDists(times, &c.desc)
+
 	desc := TrackDesc{
 		Deviation: math.Inf(1),
 	}
 
-	var ind [4]int
-	var tmpDesc TrackDesc
-	for ind[0] = range dists[0] {
-		for ind[1] = range dists[1] {
-			for ind[2] = range dists[2] {
-				for ind[3] = range dists[3] {
-					trackDists := mkTrackDists(dists, &ind)
-					if mkTrack(&trackDists, &tmpDesc) && tmpDesc.Deviation < desc.Deviation {
-						tmpDesc.Times = mkTrackTimes(times, &ind)
+	var p [4]int
+	for p[0] = range dists[0] {
+		for p[1] = range dists[1] {
+			for p[2] = range dists[2] {
+				for p[3] = range dists[3] {
+					var tmpDesc TrackDesc
+					trackDists := mkTrackDists(dists, &p)
+					if c.mkTrack(&trackDists, &tmpDesc) && tmpDesc.Deviation < desc.Deviation {
+						tmpDesc.Times = mkTrackTimes(times, &p)
 						desc = tmpDesc
 					}
 				}
 			}
 		}
 	}
-	if desc.Deviation != math.Inf(1) && systemError(&desc) {
-		return &desc
+	if !c.systemError(&desc) {
+		return nil
 	}
-	return nil
+	return &desc
 }
 
-func mkTrack(dists *TrackDists, desc *TrackDesc) bool {
-	points := [4]geo.Vec2{wires[0], wires[1], wires[2], wires[3]}
+func (c *Chamber) mkTrack(dists *TrackDists, desc *TrackDesc) bool {
+	points := c.desc.Wires
 	var line geo.Line2
 	desc.Deviation = math.Inf(1)
 	numPermutations := uint(math.Pow(2, float64(len(dists))))
@@ -200,7 +222,7 @@ func mkTrack(dists *TrackDists, desc *TrackDesc) bool {
 			} else {
 				points[j].Y = dists[j]
 			}
-			points[j].Y += wires[j].Y
+			points[j].Y += c.desc.Wires[j].Y
 		}
 		dev := leastSquares(points[:], &line)
 		if dev != -1 && dev < desc.Deviation {
@@ -212,18 +234,18 @@ func mkTrack(dists *TrackDists, desc *TrackDesc) bool {
 	return desc.Deviation != math.Inf(1)
 }
 
-func mkTrackTimes(chamTimes *ChamTimes, ind *[4]int) TrackTimes {
+func mkTrackTimes(chamTimes *ChamTimes, p *[4]int) TrackTimes {
 	var times TrackTimes
 	for i := range times {
-		times[i] = chamTimes[i][ind[i]%len(chamTimes[i])]
+		times[i] = chamTimes[i][p[i]%len(chamTimes[i])]
 	}
 	return times
 }
 
-func mkTrackDists(chamDists *ChamDists, ind *[4]int) TrackDists {
+func mkTrackDists(chamDists *ChamDists, p *[4]int) TrackDists {
 	var dists TrackDists
 	for i := range dists {
-		dists[i] = chamDists[i][ind[i]%len(chamDists[i])]
+		dists[i] = chamDists[i][p[i]%len(chamDists[i])]
 	}
 	return dists
 }
@@ -232,24 +254,13 @@ func mkChamDists(times *ChamTimes, desc *ChamberDesc) *ChamDists {
 	var dists ChamDists
 	for wire := range times {
 		for _, time := range times[wire] {
-			offset := desc.Offsets[wire]
-			if time > offset {
-				speed := desc.Speeds[wire]
+			offset, speed := desc.Offsets[wire], desc.Speeds[wire]
+			if time > offset && math.Abs(float64(time-offset)*speed) < chamberWidth/2 {
 				dists[wire] = append(dists[wire], float64(time-offset)*speed)
 			}
 		}
 	}
 	return &dists
-}
-
-func getDepth(dists *ChamDists) uint {
-	depth := uint(math.MaxUint64)
-	for _, wireDists := range dists {
-		if uint(len(wireDists)) < depth {
-			depth = uint(len(wireDists))
-		}
-	}
-	return depth
 }
 
 func leastSquares(pts []geo.Vec2, line *geo.Line2) float64 {
@@ -289,11 +300,11 @@ func sign(val float64) float64 {
 	}
 }
 
-func systemError(desc *TrackDesc) bool {
+func (c *Chamber) systemError(desc *TrackDesc) bool {
 	var r float64
 	for i := range desc.Points {
 		trackSign := sign(desc.Points[i].Y)
-		switch trackSign * sign(wires[i].Y) {
+		switch trackSign * sign(c.desc.Wires[i].Y) {
 		case 1:
 			if math.Abs(desc.Points[i].Y) > 6.2 {
 				r = 6.2
@@ -317,4 +328,15 @@ func systemError(desc *TrackDesc) bool {
 
 func getSystemError(r, ang float64) float64 {
 	return r * (1/math.Cos(ang) - 1)
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func (c *Chamber) isTimeGood(wire int, t uint) bool {
+	return t > c.desc.Offsets[wire] && math.Abs(float64(t-c.desc.Offsets[wire])*c.desc.Speeds[wire]) < chamberWidth/2
 }

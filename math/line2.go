@@ -31,13 +31,7 @@ func NewLine2KB(k, b float64) Line2 {
 //NewLine2Points создает Line2 по двум точкам, через которые проходит прямая.
 func NewLine2Points(pt1, pt2 Vec2) Line2 {
 	vec := pt1.Sub(pt2)
-
-	orth := vec.Ortho().Ort()
-	dist := -orth.Dot(pt2)
-	return Line2{
-		Ortho: orth,
-		Dist:  dist,
-	}
+	return NewLine2Vec(pt1, vec)
 }
 
 //NewLine2Vec создает Line2 по точке pt, через которую проходит прямая, и напаравляющему вектору vec прямой.

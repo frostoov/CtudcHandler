@@ -14,8 +14,8 @@ import (
 )
 
 type Handler struct {
-	chambers    map[uint]*trek.Chamber
-	tracksFiles map[uint]*os.File
+	chambers    map[int]*trek.Chamber
+	tracksFiles map[int]*os.File
 	loadFile    *os.File
 }
 
@@ -28,7 +28,7 @@ func NewHandler() (*Handler, error) {
 		return nil, fmt.Errorf("Failed create load file: %s", err)
 	}
 	return &Handler{
-		tracksFiles: make(map[uint]*os.File),
+		tracksFiles: make(map[int]*os.File),
 		loadFile:    loadFile,
 	}, nil
 }
@@ -77,7 +77,7 @@ func (h *Handler) handleRun(root string) error {
 		var muons uint
 		for cham, times := range times {
 			if chamber, ok := chambers[cham]; ok {
-				depth := getDepth(chamber, times)
+				depth := chamber.TimesDepth(times)
 				muons += uint(depth)
 				if depth > 0 {
 					loadChams++
@@ -140,23 +140,6 @@ func handle(runs []int) error {
 	return h.Handle(runs)
 }
 
-func getDepth(cham *trek.Chamber, times *trek.ChamTimes) int {
-	depth := math.MaxInt64
-	offsets := cham.Offsets()
-	for wire := range times {
-		wireDepth := 0
-		for _, t := range times[wire] {
-			if t > offsets[wire] {
-				wireDepth++
-			}
-		}
-		if wireDepth < depth {
-			depth = wireDepth
-		}
-	}
-	return depth
-}
-
 func toAng(rad float64) float64 {
 	return rad / math.Pi * 180
 }
@@ -187,12 +170,12 @@ func readChamberConfig(filename string) ([]trek.ChamberDesc, error) {
 	return chamConfig, nil
 }
 
-func readChambers(filename string) (map[uint]*trek.Chamber, error) {
+func readChambers(filename string) (map[int]*trek.Chamber, error) {
 	chamConfig, err := readChamberConfig(filename)
 	if err != nil {
 		return nil, err
 	}
-	chambers := make(map[uint]*trek.Chamber)
+	chambers := make(map[int]*trek.Chamber)
 	for i := range chamConfig {
 		chambers[chamConfig[i].Number] = trek.NewChamber(chamConfig[i])
 	}

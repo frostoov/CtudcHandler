@@ -22,8 +22,8 @@ func (c *CoordSystem) ConvertVector(v Vec3) Vec3 {
 
 func (c *CoordSystem) ConvertLine(l Line3) Line3 {
 	return Line3{
-		c.rotate(l.Vector),
-		c.ConvertVector(l.Point),
+		Vector: c.rotate(l.Vector),
+		Point:  c.ConvertVector(l.Point),
 	}
 }
 

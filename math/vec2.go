@@ -1,6 +1,7 @@
 package math
 
 import (
+	"encoding/json"
 	"fmt"
 	"math"
 )
@@ -45,5 +46,22 @@ func (v Vec2) Ortho() Vec2 {
 	return Vec2{
 		X: v.Y,
 		Y: -v.X,
+	}
+}
+
+func (v *Vec2) UnmarshalJSON(data []byte) error {
+	var a [2]float64
+	if err := json.Unmarshal(data, &a); err != nil {
+		return err
+	}
+	v.X, v.Y = a[0], a[1]
+	return nil
+}
+func (v *Vec2) MarshalJSON() ([]byte, error) {
+	a := [2]float64{v.X, v.Y}
+	if data, err := json.Marshal(a); err != nil {
+		return nil, err
+	} else {
+		return data, nil
 	}
 }

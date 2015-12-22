@@ -49,8 +49,8 @@ func (e *Event) Hits() []Hit {
 }
 
 // Times возвращает измерения со всей установки в формате [chamber]*ChamTimes.
-func (e *Event) Times() map[uint]*ChamTimes {
-	times := make(map[uint]*ChamTimes)
+func (e *Event) Times() map[int]*ChamTimes {
+	times := make(map[int]*ChamTimes)
 	for _, h := range e.hits {
 		if times[h.Chamber()] == nil {
 			times[h.Chamber()] = new(ChamTimes)
@@ -61,7 +61,7 @@ func (e *Event) Times() map[uint]*ChamTimes {
 }
 
 // ChamberTimes возвращает измерения с камеры cham.
-func (e *Event) ChamberTimes(cham uint) *ChamTimes {
+func (e *Event) ChamberTimes(cham int) *ChamTimes {
 	var times ChamTimes
 	for _, h := range e.hits {
 		if h.Chamber() == cham {
@@ -72,8 +72,8 @@ func (e *Event) ChamberTimes(cham uint) *ChamTimes {
 }
 
 // TriggeredChambers возвращает множество всех сработавших камер.
-func (e *Event) TriggeredChambers() map[uint]bool {
-	trigChams := make(map[uint]bool)
+func (e *Event) TriggeredChambers() map[int]bool {
+	trigChams := make(map[int]bool)
 	for _, hit := range e.hits {
 		trigChams[hit.Chamber()] = true
 	}

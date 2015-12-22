@@ -1,17 +1,14 @@
 package main
 
 import (
-	"bufio"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"os"
+	"regexp"
 	"strconv"
 	"strings"
-
-	"github.com/frostoov/CtudcHandler/trek"
 )
 
 type appConfig struct {
@@ -19,6 +16,8 @@ type appConfig struct {
 	Speed     float64 `json:"speed"`
 	Offset    uint    `json:"offset"`
 }
+
+var appConf = readAppConfig()
 
 func readAppConfig() appConfig {
 	var conf appConfig
@@ -36,38 +35,46 @@ func formatRunDir(run int) string {
 	return appConf.CtudcRoot + fmt.Sprintf("/run_%03d", run)
 }
 
-var appConf = readAppConfig()
-
-func print() {
-	if len(os.Args) != 2 {
-		log.Fatalln("Specify file")
-	}
-	f, err := os.Open(os.Args[1])
+func parseRuns(runList string) ([]int, error) {
+	re, err := regexp.Compile(`\d+-\d`)
 	if err != nil {
-		log.Fatalln(err)
+		return nil, err
 	}
-	defer f.Close()
-	reader := bufio.NewReader(f)
-	header, err := reader.ReadString('\n')
-	if err != nil {
-		log.Fatalln(err)
+	var runs []int
+	hasItem := func(item int, array []int) bool {
+		for i := range array {
+			if item == array[i] {
+				return false
+			}
+		}
+		return true
 	}
-	fmt.Print(header)
-	var record trek.ExtEvent
-	var ShSh uint
-	var long uint
-	for record.Unmarshal(reader) == nil {
-		for i := range record.Decor {
-			switch record.Decor[i].Type {
-			case 0:
-				long++
-			case 1:
-				ShSh++
+	for _, str := range strings.Split(runList, ",") {
+		str = strings.TrimSpace(str)
+		if re.FindString(str) == str {
+			dash := strings.IndexRune(str, '-')
+			val1, err := strconv.Atoi(str[:dash])
+			if err != nil {
+				return nil, err
+			}
+			val2, err := strconv.Atoi(str[dash+1:])
+			if err != nil {
+				return nil, err
+			}
+			for i := val1; i < val2; i++ {
+				if !hasItem(i, runs) {
+					runs = append(runs, i)
+				}
+			}
+		} else {
+			if val, err := strconv.Atoi(str); err != nil {
+				return nil, err
+			} else if !hasItem(val, runs) {
+				runs = append(runs, val)
 			}
 		}
 	}
-	fmt.Println("ShSh:", ShSh)
-	fmt.Println("long:", long)
+	return runs, nil
 }
 
 var cmd = flag.String("cmd", "handle", "type of command: handle|merge")
@@ -75,13 +82,9 @@ var runs = flag.String("runs", "", `list of runs, e.g. "1, 2, 3, 4"`)
 
 func main() {
 	flag.Parse()
-	var runList []int
-	for _, s := range strings.Split(*runs, ",") {
-		val, err := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
-		if err != nil {
-			log.Fatalln("Invalid run list")
-		}
-		runList = append(runList, int(val))
+	runList, err := parseRuns(*runs)
+	if err != nil {
+		log.Fatalln("Failed parse runs list:", err)
 	}
 	switch *cmd {
 	case "handle":
