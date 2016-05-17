@@ -174,7 +174,7 @@ func mergeRun(root string) error {
 
 func merge(runs []int) error {
 	for _, run := range runs {
-		root := appConf.CtudcRoot + fmt.Sprintf("/run_%03d", run)
+		root := formatRunDir(run)
 		log.Print("Processing ", root)
 		if err := mergeRun(root); err != nil {
 			log.Println(" failed:", err)

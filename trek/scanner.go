@@ -2,7 +2,9 @@ package trek
 
 import (
 	"bufio"
+	"errors"
 	"io"
+	"time"
 )
 
 // Scanner осуществляет последовательное считывание событий КТУДК.
@@ -13,18 +15,41 @@ type Scanner struct {
 	err    error
 }
 
+func readHeader(r *bufio.Reader) (string, error) {
+	header, err := r.ReadString('\n')
+	if err != nil {
+		return "", err
+	}
+	header = header[:len(header)-2]
+	if header != "TDS" {
+		return "", errors.New("NewScanner invalid header")
+	}
+	return header, nil
+}
+
 // NewScanner возвращает новый Scanner, читающиц из r.
 func NewScanner(r io.Reader) (*Scanner, error) {
 	reader := bufio.NewReader(r)
-	header, err := reader.ReadString('\n')
+	header, err := readHeader(reader)
 	if err != nil {
 		return nil, err
 	}
-	header = header[:len(header)-2]
 	return &Scanner{
 		header: header,
 		reader: reader,
 	}, nil
+}
+
+func (s *Scanner) Reset(r io.Reader) error {
+	s.reader.Reset(r)
+	header, err := readHeader(s.reader)
+	if err != nil {
+		return nil
+	}
+	s.header = header
+	s.event = Event{0, 0, time.Now(), nil}
+	s.err = nil
+	return nil
 }
 
 // Scan считывает следующее событие. В случае успеха возвращает true,

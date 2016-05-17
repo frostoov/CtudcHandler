@@ -33,6 +33,10 @@ func (e *Event) Nrun() uint {
 	return uint(e.nRun)
 }
 
+func (e *Event) SetNevent(n uint) {
+	e.nEvent = uint64(n)
+}
+
 // Nevent возвращает номер события КТУДК.
 func (e *Event) Nevent() uint {
 	return uint(e.nEvent)

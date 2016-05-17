@@ -1,11 +1,14 @@
 package main
 
 import (
+	"os"
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -21,7 +24,8 @@ var appConf = readAppConfig()
 
 func readAppConfig() appConfig {
 	var conf appConfig
-	data, err := ioutil.ReadFile("CtudcHandler.conf")
+	confpath := path.Join(os.Getenv("HOME"), ".config", "ctudc", "CtudcHandler.conf")
+	data, err := ioutil.ReadFile(confpath)
 	if err != nil {
 		log.Fatalln("Failed read CtudcHandler.conf:", err)
 	}
@@ -32,26 +36,27 @@ func readAppConfig() appConfig {
 }
 
 func formatRunDir(run int) string {
-	return appConf.CtudcRoot + fmt.Sprintf("/run_%03d", run)
+	return path.Join(appConf.CtudcRoot, "data", fmt.Sprintf("run_%05d", run))
 }
 
 func parseRuns(runList string) ([]int, error) {
-	re, err := regexp.Compile(`\d+-\d`)
+	re, err := regexp.Compile(`\d+-\d+`)
 	if err != nil {
 		return nil, err
 	}
 	var runs []int
-	hasItem := func(item int, array []int) bool {
-		for i := range array {
-			if item == array[i] {
-				return false
-			}
+	runSet := make(map[int]bool)
+	addRun := func(run int) {
+		if runSet[run] == false {
+			runs = append(runs, run)
+			runSet[run] = true
 		}
-		return true
 	}
 	for _, str := range strings.Split(runList, ",") {
-		str = strings.TrimSpace(str)
-		if re.FindString(str) == str {
+		if str = strings.TrimSpace(str); len(str) == 0 {
+			return nil, errors.New("parseRuns: empty string")
+		}
+		if re.FindString(str) == str && len(str) != 0 {
 			dash := strings.IndexRune(str, '-')
 			val1, err := strconv.Atoi(str[:dash])
 			if err != nil {
@@ -61,16 +66,14 @@ func parseRuns(runList string) ([]int, error) {
 			if err != nil {
 				return nil, err
 			}
-			for i := val1; i < val2; i++ {
-				if !hasItem(i, runs) {
-					runs = append(runs, i)
-				}
+			for i := val1; i <= val2; i++ {
+				addRun(i)
 			}
 		} else {
-			if val, err := strconv.Atoi(str); err != nil {
+			if run, err := strconv.Atoi(str); err != nil {
 				return nil, err
-			} else if !hasItem(val, runs) {
-				runs = append(runs, val)
+			} else {
+				addRun(run)
 			}
 		}
 	}
@@ -78,7 +81,7 @@ func parseRuns(runList string) ([]int, error) {
 }
 
 var cmd = flag.String("cmd", "handle", "type of command: handle|merge")
-var runs = flag.String("runs", "", `list of runs, e.g. "1, 2, 3, 4"`)
+var runs = flag.String("runs", "", `list of runs, e.g. "1, 2, 3, 4, 6-10"`)
 
 func main() {
 	flag.Parse()
@@ -94,6 +97,10 @@ func main() {
 	case "merge":
 		if err := merge(runList); err != nil {
 			log.Println("Failed merge data:", err)
+		}
+	case "list":
+		if err := list(runList); err != nil {
+			log.Println("Failed list data: ", err)
 		}
 	default:
 		log.Println("Invalid cmd")

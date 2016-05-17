@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -17,6 +18,16 @@ type Handler struct {
 	chambers    map[int]*trek.Chamber
 	tracksFiles map[int]*os.File
 	loadFile    *os.File
+}
+
+func formatTracksHeader() string {
+	var buf bytes.Buffer
+	for i := 0; i < 4; i++ {
+		fmt.Fprintf(&buf, "WIRE_%03d\t", i+1)
+	}
+	fmt.Fprintf(&buf, "%8s\t%8s\t%8s\t%8s\t%8s\t%8s\t%8s\t%8s\t%8s",
+		"k1", "k2", "dev", "ang[C]", "b[C]", "ang[D]", "b[D]", "dang", "db")
+	return buf.String()
 }
 
 func NewHandler() (*Handler, error) {
@@ -106,11 +117,9 @@ func (h *Handler) handleRun(root string) error {
 					if err != nil {
 						log.Fatalln("Failed create track file:", err)
 					}
-					for i := 0; i < 4; i++ {
-						fmt.Fprintf(f, "WIRE_%03d\t", i+1)
+					if _, err := fmt.Fprintln(f, "#", formatTracksHeader()); err != nil {
+						log.Fatalln("Failed write track header:", err)
 					}
-					fmt.Fprintf(f, "%8s\t%8s\t%8s\t%8s\t%8s\t%8s\t%8s\t%8s\t%8s\t",
-						"k1", "k2", "dev", "ang[C]", "b[C]", "ang[D]", "b[D]", "dang", "db")
 
 					h.tracksFiles[cham] = f
 				}

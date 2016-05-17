@@ -68,7 +68,7 @@ func (c *Chamber) LineProjection(l geo.Line3) geo.Line2 {
 
 // TimesDepth возвращает наименьшую "глубину" измерений для 4 проволок.
 func (c *Chamber) TimesDepth(times *ChamTimes) int {
-	depth := math.MaxInt64
+    depth := -1
 	for wire := range times {
 		wireDepth := 0
 		for _, t := range times[wire] {
@@ -76,7 +76,7 @@ func (c *Chamber) TimesDepth(times *ChamTimes) int {
 				wireDepth++
 			}
 		}
-		if wireDepth < depth {
+		if depth == -1 || wireDepth < depth {
 			depth = wireDepth
 		}
 	}
@@ -160,12 +160,12 @@ func mkChamberHexahedron(pts []geo.Vec3) geo.Hexahedron {
 	return geo.NewHexahedron(vertices)
 }
 
-// var wires = [4]geo.Vec2{
-// 	geo.Vec2{X: 41, Y: 0.75},
-// 	geo.Vec2{X: 51, Y: -0.75},
-// 	geo.Vec2{X: 61, Y: 0.75},
-// 	geo.Vec2{X: 71, Y: -0.75},
-// }
+var DefaultWires = [4]geo.Vec2{
+	geo.Vec2{X: 41, Y: 0.75},
+	geo.Vec2{X: 51, Y: -0.75},
+	geo.Vec2{X: 61, Y: 0.75},
+	geo.Vec2{X: 71, Y: -0.75},
+}
 
 // ChamDists содержит длины дрейфа в одной камеры в формате [wire][row]dist.
 type ChamDists [4][]float64
