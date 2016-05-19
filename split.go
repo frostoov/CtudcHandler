@@ -77,7 +77,9 @@ func split(dirnames []string) error {
 					return err
 				}
 				runWriter.file = f
-				runWriter.writer = bufio.NewWriter(f)
+				w := bufio.NewWriter(f)
+				w.WriteString("TDSa\n")
+				runWriter.writer = w
 			}
 			if runWriter.lastRecord < int(record.Nevent()) {
 				record.Marshal(runWriter.writer)
@@ -92,6 +94,7 @@ func split(dirnames []string) error {
 	}
 
 	for _, dirname := range dirnames {
+		log.Println("Processing: ", dirname)
 		files, err := ioutil.ReadDir(dirname)
 		if err != nil {
 			return err

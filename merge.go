@@ -61,10 +61,14 @@ func ctudcReader(dirname string) (<-chan trek.Event, error) {
 				continue
 			}
 			f, err := os.Open(dirname + "/" + fileStat.Name())
+			log.Println("Opening file: ", fileStat.Name())
 			if err != nil {
 				continue
 			}
 			s, err := trek.NewScanner(f)
+			if err != nil {
+				panic("failed create scanner: " + err.Error())
+			}
 			for s.Scan() {
 				c <- s.Record().Copy()
 			}
@@ -104,8 +108,8 @@ func nevodReader(dirname string) (<-chan nevod.EventMeta, error) {
 func mergeRun(root string) error {
 	ctudc := root + "/ctudc"
 	nevod := root + "/nevod"
-	decor := root + "/decor.dat.bkp"
-	decorShSh := root + "/decor.dat"
+	decor := root + "/decor.dat"
+	decorShSh := root + "/decor_shsh.dat"
 	extData := root + "/extctudc.tds"
 
 	decorTracks, err := readDecorTracks(decor)

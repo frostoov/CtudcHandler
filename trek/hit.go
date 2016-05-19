@@ -59,6 +59,10 @@ func (h *Hit) Unmarshal(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &h.channel); err != nil {
 		return err
 	}
+	h.channel = uint32((3 - h.Wire()) | (h.Chamber() << 8))
+	if h.Wire() > 3 {
+		panic("Hit Unmarshal h.Wire() > 3")
+	}
 	if err := binary.Read(r, binary.LittleEndian, &h.time); err != nil {
 		return err
 	}
@@ -67,7 +71,11 @@ func (h *Hit) Unmarshal(r io.Reader) error {
 
 // Marshal осуществляет сериализацию данных хита в w.
 func (h Hit) Marshal(w io.Writer) error {
-	if err := binary.Write(w, binary.LittleEndian, h.channel); err != nil {
+	channel := uint32((3 - h.Wire()) | (h.Chamber() << 8))
+	if channel&0xFF > 3 {
+		panic("Hit Marshal h.Wire() > 3")
+	}
+	if err := binary.Write(w, binary.LittleEndian, channel); err != nil {
 		return err
 	}
 	if err := binary.Write(w, binary.LittleEndian, h.time); err != nil {

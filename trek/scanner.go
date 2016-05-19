@@ -2,7 +2,6 @@ package trek
 
 import (
 	"bufio"
-	"errors"
 	"io"
 	"time"
 )
@@ -21,9 +20,6 @@ func readHeader(r *bufio.Reader) (string, error) {
 		return "", err
 	}
 	header = header[:len(header)-2]
-	if header != "TDS" {
-		return "", errors.New("NewScanner invalid header")
-	}
 	return header, nil
 }
 

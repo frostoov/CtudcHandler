@@ -101,7 +101,6 @@ func parseRuns(runList string) ([]int, error) {
 
 var cmd = flag.String("cmd", "handle", "type of command: handle|merge|split")
 var runs = flag.String("runs", "", `list of runs, e.g. "1, 2, 3, 4, 6-10"`)
-var dirs = flag.String("dirs", "", "list of dirs to split")
 
 func main() {
 	flag.Parse()
@@ -128,7 +127,11 @@ func main() {
 			log.Println("Failed split data: ", err)
 		}
 	case "dcrsplit":
-		if err := dcrsplit(flag.Args()); err != nil {
+		if err := dcrsplit(flag.Args(), "decor.dat"); err != nil {
+			log.Println("Failed split decor data:", err)
+		}
+	case "dcrsplit-shsh":
+		if err := dcrsplit(flag.Args(), "decor_shsh.dat"); err != nil {
 			log.Println("Failed split decor data:", err)
 		}
 	default:

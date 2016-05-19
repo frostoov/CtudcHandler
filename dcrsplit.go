@@ -4,12 +4,12 @@ import (
 	"bufio"
 	"log"
 	"os"
+	"path"
 	"strconv"
 	"strings"
-	"path"
 )
 
-func dcrSplitFile(filename string) error {
+func dcrSplitFile(filename, outname string) error {
 	file, err := os.Open(filename)
 	if err != nil {
 		return err
@@ -34,7 +34,7 @@ func dcrSplitFile(filename string) error {
 				if currentFile != nil {
 					currentFile.Close()
 				}
-				if f, err := os.Create(path.Join(formatRunDir(int(run)), "decor.dat.bkp")); err != nil {
+				if f, err := os.Create(path.Join(formatRunDir(int(run)), outname)); err != nil {
 					return err
 				} else {
 					currentFile = f
@@ -46,9 +46,9 @@ func dcrSplitFile(filename string) error {
 	return nil
 }
 
-func dcrsplit(filenames []string) error {
+func dcrsplit(filenames []string, outname string) error {
 	for _, f := range filenames {
-		if err := dcrSplitFile(f); err != nil {
+		if err := dcrSplitFile(f, outname); err != nil {
 			return err
 		}
 	}
