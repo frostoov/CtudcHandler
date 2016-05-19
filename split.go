@@ -2,11 +2,12 @@ package main
 
 import (
 	"bufio"
-	"github.com/frostoov/CtudcHandler/trek"
 	"io/ioutil"
 	"log"
 	"os"
 	"path"
+
+	"github.com/frostoov/CtudcHandler/trek"
 )
 
 type RunData struct {
@@ -15,6 +16,7 @@ type RunData struct {
 	eventCount int
 	fileCount  int
 	lastRecord int
+	badRecord  bool
 }
 
 func split(dirnames []string) error {
@@ -47,12 +49,13 @@ func split(dirnames []string) error {
 			runWriter := runWriters[run]
 			if runWriter == nil {
 				rundir := formatRunDir(run)
-				if err := os.MkdirAll(rundir, 0777); err != nil {
+				if err := os.MkdirAll(path.Join(rundir, "ctudc"), 0777); err != nil {
 					return err
 				}
-				log.Println("Created: ", formatRunDir(run))
-				filename := formatFileName(run, 0)
-				f, err := os.Open(filename)
+				filename := formatCtudcFilename(run, 0)
+
+				f, err := os.Create(filename)
+				log.Println("Created: ", rundir)
 				if err != nil {
 					return err
 				}
@@ -68,20 +71,22 @@ func split(dirnames []string) error {
 			} else if runWriter.eventCount > 10000 {
 				runWriter.fileCount++
 				runWriter.eventCount = 0
-				filename := formatFileName(run, runWriter.fileCount)
-				f, err := os.Open(filename)
+				filename := formatCtudcFilename(run, runWriter.fileCount)
+				f, err := os.Create(filename)
 				if err != nil {
 					return err
 				}
 				runWriter.file = f
 				runWriter.writer = bufio.NewWriter(f)
 			}
-			record.Marshal(runWriter.writer)
-			if runWriter.lastRecord >= int(record.Nevent()) {
-				panic("split runWriter.lastRecord >= record.Nevent()")
+			if runWriter.lastRecord < int(record.Nevent()) {
+				record.Marshal(runWriter.writer)
+				runWriter.lastRecord = int(record.Nevent())
+				runWriter.eventCount++
+			} else if !runWriter.badRecord {
+				log.Printf("split runWriter.lastRecord < int(record.Nevent()) run #%d\n", run)
+				runWriter.badRecord = true
 			}
-			runWriter.lastRecord = int(record.Nevent())
-			runWriter.eventCount++
 		}
 		return nil
 	}
@@ -95,7 +100,9 @@ func split(dirnames []string) error {
 			if path.Ext(filestat.Name()) != ".tds" {
 				continue
 			}
-			splitFile(path.Join(dirname, filestat.Name()))
+			if err := splitFile(path.Join(dirname, filestat.Name())); err != nil {
+				return err
+			}
 		}
 	}
 

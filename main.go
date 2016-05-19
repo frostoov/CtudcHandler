@@ -1,15 +1,16 @@
 package main
 
 import (
-	"os"
 	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path"
 	"regexp"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -25,6 +26,9 @@ var appConf = readAppConfig()
 func readAppConfig() appConfig {
 	var conf appConfig
 	confpath := path.Join(os.Getenv("HOME"), ".config", "ctudc", "CtudcHandler.conf")
+	if runtime.GOOS == "windows" {
+		confpath = "CtudcHandler.conf"
+	}
 	data, err := ioutil.ReadFile(confpath)
 	if err != nil {
 		log.Fatalln("Failed read CtudcHandler.conf:", err)
@@ -35,15 +39,26 @@ func readAppConfig() appConfig {
 	return conf
 }
 
-func formatFileName(run, fileno int) string {
-	return path.Join(formatRunDir(run), fmt.Sprintf("ctudc_%05d_08d.tds", run, fileno))
+func formatCtudcFilename(run, fileno int) string {
+	return path.Join(formatRunDir(run), "ctudc", fmt.Sprintf("ctudc_%05d_%08d.tds", run, fileno))
 }
 
 func formatRunDir(run int) string {
-	return path.Join(appConf.CtudcRoot, "data", fmt.Sprintf("run_%05d", run))
+	return path.Join(appConf.CtudcRoot, fmt.Sprintf("run_%05d", run))
+}
+
+func parseDirs(dirs string) ([]string, error) {
+	dirList := strings.Split(dirs, ",")
+	for i, str := range dirList {
+		dirList[i] = strings.TrimSpace(str)
+	}
+	return dirList, nil
 }
 
 func parseRuns(runList string) ([]int, error) {
+	if len(runList) == 0 {
+		return nil, nil
+	}
 	re, err := regexp.Compile(`\d+-\d+`)
 	if err != nil {
 		return nil, err
@@ -84,7 +99,7 @@ func parseRuns(runList string) ([]int, error) {
 	return runs, nil
 }
 
-var cmd = flag.String("cmd", "handle", "type of command: handle|merge")
+var cmd = flag.String("cmd", "handle", "type of command: handle|merge|split")
 var runs = flag.String("runs", "", `list of runs, e.g. "1, 2, 3, 4, 6-10"`)
 var dirs = flag.String("dirs", "", "list of dirs to split")
 
@@ -94,7 +109,11 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed parse runs list:", err)
 	}
-	dirList := strings.Split(*dirs, " ")
+	dirList, err := parseDirs(*dirs)
+	if err != nil {
+		log.Fatalln("Failed parse dirs: ", err)
+	}
+
 	switch *cmd {
 	case "handle":
 		if err := handle(runList); err != nil {
