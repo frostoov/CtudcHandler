@@ -109,10 +109,6 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed parse runs list:", err)
 	}
-	dirList, err := parseDirs(*dirs)
-	if err != nil {
-		log.Fatalln("Failed parse dirs: ", err)
-	}
 
 	switch *cmd {
 	case "handle":
@@ -128,8 +124,12 @@ func main() {
 			log.Println("Failed list data: ", err)
 		}
 	case "split":
-		if err := split(dirList); err != nil {
+		if err := split(flag.Args()); err != nil {
 			log.Println("Failed split data: ", err)
+		}
+	case "dcrsplit":
+		if err := dcrsplit(flag.Args()); err != nil {
+			log.Println("Failed split decor data:", err)
 		}
 	default:
 		log.Println("Invalid cmd")
