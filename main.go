@@ -99,7 +99,7 @@ func parseRuns(runList string) ([]int, error) {
 	return runs, nil
 }
 
-var cmd = flag.String("cmd", "handle", "type of command: handle|merge|split")
+var cmd = flag.String("cmd", "handle", "type of command: handle|merge|split|dcrsplit|dcrsplit-shsh")
 var runs = flag.String("runs", "", `list of runs, e.g. "1, 2, 3, 4, 6-10"`)
 
 func main() {
