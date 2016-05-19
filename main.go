@@ -35,6 +35,10 @@ func readAppConfig() appConfig {
 	return conf
 }
 
+func formatFileName(run, fileno int) string {
+	return path.Join(formatRunDir(run), fmt.Sprintf("ctudc_%05d_08d.tds", run, fileno))
+}
+
 func formatRunDir(run int) string {
 	return path.Join(appConf.CtudcRoot, "data", fmt.Sprintf("run_%05d", run))
 }
@@ -82,6 +86,7 @@ func parseRuns(runList string) ([]int, error) {
 
 var cmd = flag.String("cmd", "handle", "type of command: handle|merge")
 var runs = flag.String("runs", "", `list of runs, e.g. "1, 2, 3, 4, 6-10"`)
+var dirs = flag.String("dirs", "", "list of dirs to split")
 
 func main() {
 	flag.Parse()
@@ -89,6 +94,7 @@ func main() {
 	if err != nil {
 		log.Fatalln("Failed parse runs list:", err)
 	}
+	dirList := strings.Split(*dirs, " ")
 	switch *cmd {
 	case "handle":
 		if err := handle(runList); err != nil {
@@ -101,6 +107,10 @@ func main() {
 	case "list":
 		if err := list(runList); err != nil {
 			log.Println("Failed list data: ", err)
+		}
+	case "split":
+		if err := split(dirList); err != nil {
+			log.Println("Failed split data: ", err)
 		}
 	default:
 		log.Println("Invalid cmd")
