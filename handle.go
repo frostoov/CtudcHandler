@@ -113,7 +113,7 @@ func (h *Handler) handleRun(root string) error {
 					continue
 				}
 				if h.tracksFiles[cham] == nil {
-					f, err := os.Create(fmt.Sprintf("output/tracks/chamber_%03d.dat", cham))
+					f, err := os.Create(fmt.Sprintf("output/tracks/chamber_%03d.dat", cham+1))
 					if err != nil {
 						log.Fatalln("Failed create track file:", err)
 					}

@@ -1,13 +1,14 @@
 package main
 
-import(
-	"github.com/frostoov/CtudcHandler/trek"
+import (
+	"bufio"
+	"fmt"
 	"io"
 	"log"
-	"fmt"
-	"path"
 	"os"
-	"bufio"
+	"path"
+
+	"github.com/frostoov/CtudcHandler/trek"
 )
 
 func list(runList []int) error {
@@ -18,7 +19,7 @@ func list(runList []int) error {
 	for _, run := range runList {
 		root := formatRunDir(run)
 		log.Printf("Processing run #%v\n", run)
-		listRun(root, outdir)
+		listRun(path.Join(root, "ctudc"), outdir)
 	}
 	return nil
 }
@@ -26,7 +27,7 @@ func list(runList []int) error {
 func listRun(dirname, outdir string) error {
 	files := map[string]*os.File{}
 	writers := map[string]*bufio.Writer{}
-	defer func(){
+	defer func() {
 		for _, w := range writers {
 			w.Flush()
 		}
