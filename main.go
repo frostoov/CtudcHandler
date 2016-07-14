@@ -89,11 +89,11 @@ func parseRuns(runList string) ([]int, error) {
 				addRun(i)
 			}
 		} else {
-			if run, err := strconv.Atoi(str); err != nil {
+			run, err := strconv.Atoi(str)
+			if err != nil {
 				return nil, err
-			} else {
-				addRun(run)
 			}
+			addRun(run)
 		}
 	}
 	return runs, nil
