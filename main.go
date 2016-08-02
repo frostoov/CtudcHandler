@@ -17,6 +17,7 @@ import (
 
 type appConfig struct {
 	CtudcRoot string  `json:"ctudc_root"`
+	NevodRoot string  `json:"nevod_root"	`
 	Speed     float64 `json:"speed"`
 	Offset    uint    `json:"offset"`
 }
@@ -39,12 +40,24 @@ func readAppConfig() appConfig {
 	return conf
 }
 
-func formatCtudcFilename(run, fileno int) string {
-	return path.Join(formatRunDir(run), "ctudc", fmt.Sprintf("ctudc_%05d_%08d.tds", run, fileno))
-}
-
 func formatRunDir(run int) string {
 	return path.Join(appConf.CtudcRoot, fmt.Sprintf("run_%05d", run))
+}
+
+func formatCtudcFilename(root string, run, fileno int) string {
+	return path.Join(root, fmt.Sprintf("ctudc_%05d_%08d.tds", run, fileno))
+}
+
+func formatCtudcSubdir(root string, run int) string {
+	return path.Join(root, fmt.Sprintf("ctudc_%05d", run))
+}
+
+func formatNevodSubdir(root string, run int) string {
+	return path.Join(root, fmt.Sprintf("NAD_%03d", run))
+}
+
+func formatNevodRunDir(run int) string {
+	return path.Join(appConf.NevodRoot, "NAD", fmt.Sprintf("NAD_%03d", run))
 }
 
 func parseDirs(dirs string) ([]string, error) {
