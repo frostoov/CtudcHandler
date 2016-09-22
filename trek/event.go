@@ -114,7 +114,7 @@ func (e *Event) Marshal(w io.Writer) error {
 	if err := binary.Write(w, binary.LittleEndian, e.nEvent); err != nil {
 		return err
 	}
-	if err := e.marshalTime(w); err != nil {
+	if err := marshalTime(w, e.time); err != nil {
 		return err
 	}
 	if err := binary.Write(w, binary.LittleEndian, uint32(len(e.hits))); err != nil {
@@ -136,9 +136,11 @@ func (e *Event) Unmarshal(r io.Reader) error {
 	if err := binary.Read(r, binary.LittleEndian, &e.nEvent); err != nil {
 		return err
 	}
-	if err := e.unmarhsalTime(r); err != nil {
+	t, err := unmarhsalTime(r)
+	if err != nil {
 		return err
 	}
+	e.time = t
 	var size uint32
 	if err := binary.Read(r, binary.LittleEndian, &size); err != nil {
 		return err
@@ -156,21 +158,20 @@ func (e *Event) Unmarshal(r io.Reader) error {
 	return nil
 }
 
-func (e *Event) marshalTime(w io.Writer) error {
-	millis := int64(e.time.UnixNano() / 1000000)
+func marshalTime(w io.Writer, t time.Time) error {
+	millis := int64(t.UnixNano() / 1000000)
 	if err := binary.Write(w, binary.LittleEndian, millis); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *Event) unmarhsalTime(r io.Reader) error {
+func unmarhsalTime(r io.Reader) (time.Time, error) {
 	var millis int64
 	if err := binary.Read(r, binary.LittleEndian, &millis); err != nil {
-		return err
+		return time.Time{}, err
 	}
 	sec := millis / 1000
 	nsec := (millis % 1000) * 1000000
-	e.time = time.Unix(sec, nsec)
-	return nil
+	return time.Unix(sec, nsec), nil
 }

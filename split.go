@@ -19,13 +19,29 @@ type RunData struct {
 	badRecord  bool
 }
 
+func pathExists(name string) bool {
+	_, err := os.Stat(name)
+	return err == nil
+}
+
+func (r *RunData) Close() error {
+	if err := r.writer.Flush(); err != nil {
+		return err
+	}
+	if err := r.file.Close(); err != nil {
+		return err
+	}
+	return nil
+}
+
 func split(dirnames []string) error {
 	runWriters := map[int]*RunData{}
 
 	defer func() {
 		for _, writer := range runWriters {
-			writer.writer.Flush()
-			writer.file.Close()
+			if err := writer.Close(); err != nil {
+				log.Printf("Warning failed close event writer ", err)
+			}
 		}
 	}()
 
@@ -50,39 +66,49 @@ func split(dirnames []string) error {
 			if runWriter != nil && runWriter.lastRecord >= record.Nevent() {
 				log.Printf("split previousRecord(%v) >= currentRecord(%v) run #%v\n",
 					runWriter.lastRecord, record.Nevent(), run)
-			} else {
-				if runWriter == nil {
-					rundir := formatRunDir(run)
-					if err := os.MkdirAll(path.Join(rundir, "ctudc"), 0777); err != nil {
-						return err
-					}
-					filename := formatCtudcFilename(run, 0)
-
-					f, err := os.Create(filename)
-					log.Println("Created: ", rundir)
-					if err != nil {
-						return err
-					}
-					w := bufio.NewWriter(f)
-					w.WriteString("TDSa\n")
-					runWriter = &RunData{
-						file:   f,
-						writer: w,
-					}
-					runWriters[run] = runWriter
-				} else if runWriter.eventCount > 10000 {
-					runWriter.fileCount++
-					runWriter.eventCount = 0
-					filename := formatCtudcFilename(run, runWriter.fileCount)
-					f, err := os.Create(filename)
-					if err != nil {
-						return err
-					}
-					runWriter.file = f
-					w := bufio.NewWriter(f)
-					w.WriteString("TDSa\n")
-					runWriter.writer = w
+				if err := runWriter.Close(); err != nil {
+					return err
 				}
+				delete(runWriters, run)
+				runWriter = nil
+			}
+			if runWriter == nil {
+				root := formatRunDir(run)
+				ctudcdir := formatCtudcSubdir(root, run)
+				if pathExists(ctudcdir) {
+					if err := os.RemoveAll(ctudcdir); err != nil {
+						return err
+					}
+				}
+				if err := os.MkdirAll(ctudcdir, 0777); err != nil {
+					return err
+				}
+				filename := formatCtudcFilename(root, run, 0)
+
+				f, err := os.Create(filename)
+				log.Println("Created: ", filename)
+				if err != nil {
+					return err
+				}
+				w := bufio.NewWriter(f)
+				w.WriteString("TDSa\n")
+				runWriter = &RunData{
+					file:   f,
+					writer: w,
+				}
+				runWriters[run] = runWriter
+			} else if runWriter.eventCount > 10000 {
+				runWriter.fileCount++
+				runWriter.eventCount = 0
+				filename := formatCtudcFilename(formatRunDir(run), run, runWriter.fileCount)
+				f, err := os.Create(filename)
+				if err != nil {
+					return err
+				}
+				runWriter.file = f
+				w := bufio.NewWriter(f)
+				w.WriteString("TDSa\n")
+				runWriter.writer = w
 				record.Marshal(runWriter.writer)
 				runWriter.eventCount++
 			}
