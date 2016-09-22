@@ -120,11 +120,15 @@ func main() {
 		}
 	case "list":
 		if err := list(runList); err != nil {
-			log.Println("Failed list data: ", err)
+			log.Println("Failed list data:", err)
+		}
+	case "ihep":
+		if err := ihepHandle(runList); err != nil {
+			log.Println("Failed list data:", err)
 		}
 	case "split":
 		if err := split(flag.Args()); err != nil {
-			log.Println("Failed split data: ", err)
+			log.Println("Failed split data:", err)
 		}
 	case "dcrsplit":
 		if err := dcrsplit(flag.Args(), "decor.dat"); err != nil {

@@ -28,6 +28,28 @@ func (e *Event) Copy() Event {
 	}
 }
 
+func (e *Event) ChamberDepths() map[int]*[4]int {
+	ds := make(map[int]*[4]int)
+	for _, h := range e.hits {
+		if ds[h.Chamber()] == nil {
+			ds[h.Chamber()] = new([4]int)
+		}
+		ds[h.Chamber()][h.Wire()]++
+	}
+	return ds
+
+}
+
+func (e *Event) WireDepths(cham int) [4]int {
+	ds := [4]int{}
+	for _, h := range e.hits {
+		if cham == int(h.Chamber()) {
+			ds[h.Wire()]++
+		}
+	}
+	return ds
+}
+
 // Nrun возвращает номер рана события КТУДК.
 func (e *Event) Nrun() uint {
 	return uint(e.nRun)
