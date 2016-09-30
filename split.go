@@ -34,7 +34,8 @@ func (r *RunData) Close() error {
 	return nil
 }
 
-func split(dirnames []string) error {
+func split(patterns []string) error {
+	header := "TDSa\n"
 	runWriters := map[int]*RunData{}
 
 	defer func() {
@@ -51,16 +52,16 @@ func split(dirnames []string) error {
 			return err
 		}
 		defer f.Close()
-		r := bufio.NewReader(f)
-		if str, err := r.ReadString('\n'); err != nil {
+		s, err := trek.NewScanner(f)
+		if err != nil {
 			return err
-		} else if str == "TDSdrop\n" {
-			log.Printf("Skipping drop")
+		} else if s.Header() == "TDSdrop\n" {
+			log.Printf("Skipping drop\n")
 			return nil
 		}
 
-		var record trek.Event
-		for record.Unmarshal(r) == nil {
+		for s.Scan() {
+			record := s.Record()
 			run := int(record.Nrun())
 			runWriter := runWriters[run]
 			if runWriter != nil && runWriter.lastRecord >= record.Nevent() {
@@ -73,8 +74,7 @@ func split(dirnames []string) error {
 				runWriter = nil
 			}
 			if runWriter == nil {
-				root := formatRunDir(run)
-				ctudcdir := formatCtudcSubdir(root, run)
+				ctudcdir := formatCtudcSubdir(run)
 				if pathExists(ctudcdir) {
 					if err := os.RemoveAll(ctudcdir); err != nil {
 						return err
@@ -83,7 +83,7 @@ func split(dirnames []string) error {
 				if err := os.MkdirAll(ctudcdir, 0777); err != nil {
 					return err
 				}
-				filename := formatCtudcFilename(root, run, 0)
+				filename := formatCtudcFilename(run, 0)
 
 				f, err := os.Create(filename)
 				log.Println("Created: ", filename)
@@ -91,7 +91,7 @@ func split(dirnames []string) error {
 					return err
 				}
 				w := bufio.NewWriter(f)
-				w.WriteString("TDSa\n")
+				w.WriteString(header)
 				runWriter = &RunData{
 					file:   f,
 					writer: w,
@@ -100,7 +100,7 @@ func split(dirnames []string) error {
 			} else if runWriter.eventCount > 10000 {
 				runWriter.fileCount++
 				runWriter.eventCount = 0
-				filename := formatCtudcFilename(formatRunDir(run), run, runWriter.fileCount)
+				filename := formatCtudcFilename(run, runWriter.fileCount)
 				f, err := os.Create(filename)
 				if err != nil {
 					return err
@@ -121,20 +121,21 @@ func split(dirnames []string) error {
 		dirnames, err := path.Glob(pattern)
 		if err != nil {
 			log.Printf("Failed handle pattern %s %s\n", pattern, err)
+			continue
 		}
-	}
-	for _, dirname := range dirnames {
-		log.Println("Processing: ", dirname)
-		files, err := ioutil.ReadDir(dirname)
-		if err != nil {
-			return err
-		}
-		for _, filestat := range files {
-			if path.Ext(filestat.Name()) != ".tds" {
-				continue
-			}
-			if err := splitFile(path.Join(dirname, filestat.Name())); err != nil {
+		for _, dirname := range dirnames {
+			log.Println("Processing: ", dirname)
+			files, err := ioutil.ReadDir(dirname)
+			if err != nil {
 				return err
+			}
+			for _, filestat := range files {
+				if path.Ext(filestat.Name()) != ".tds" {
+					continue
+				}
+				if err := splitFile(path.Join(dirname, filestat.Name())); err != nil {
+					return err
+				}
 			}
 		}
 	}

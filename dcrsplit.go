@@ -58,6 +58,6 @@ func dcrsplit(patterns []string, outname string) error {
 				return err
 			}
 		}
-		return nil
 	}
+	return nil
 }

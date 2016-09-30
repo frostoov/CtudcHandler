@@ -229,8 +229,8 @@ func nevodReader(dirname string) (<-chan nevod.EventMeta, error) {
 
 func mergeRun(run int) error {
 	root := formatRunDir(run)
-	ctudc := formatCtudcSubdir(root, run)
-	nevod := formatNevodSubdir(root, run)
+	ctudc := formatCtudcSubdir(run)
+	nevod := formatNevodSubdir(run)
 	extData := filepath.Join(root, fmt.Sprintf("extctudc_%05d.tds", run))
 	decor := filepath.Join(root, "decor.dat")
 	decorShSh := filepath.Join(root, "decor_shsh.dat")
