@@ -4,7 +4,7 @@ import (
 	"bufio"
 	"log"
 	"os"
-	"path"
+	path "path/filepath"
 	"strconv"
 	"strings"
 )
@@ -46,11 +46,18 @@ func dcrSplitFile(filename, outname string) error {
 	return nil
 }
 
-func dcrsplit(filenames []string, outname string) error {
-	for _, f := range filenames {
-		if err := dcrSplitFile(f, outname); err != nil {
-			return err
+func dcrsplit(patterns []string, outname string) error {
+	for _, pattern := range patterns {
+		filenames, err := path.Glob(pattern)
+		if err != nil {
+			log.Printf("Failed handle pattern %s %s\n", pattern, err)
+			continue
 		}
+		for _, f := range filenames {
+			if err := dcrSplitFile(f, outname); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
-	return nil
 }

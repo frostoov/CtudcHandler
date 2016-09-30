@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path"
+	path "path/filepath"
 
 	"github.com/frostoov/CtudcHandler/trek"
 )
@@ -40,7 +40,7 @@ func split(dirnames []string) error {
 	defer func() {
 		for _, writer := range runWriters {
 			if err := writer.Close(); err != nil {
-				log.Printf("Warning failed close event writer ", err)
+				log.Printf("Warning failed close event writer %s\n", err)
 			}
 		}
 	}()
@@ -117,6 +117,12 @@ func split(dirnames []string) error {
 		return nil
 	}
 
+	for _, pattern := range patterns {
+		dirnames, err := path.Glob(pattern)
+		if err != nil {
+			log.Printf("Failed handle pattern %s %s\n", pattern, err)
+		}
+	}
 	for _, dirname := range dirnames {
 		log.Println("Processing: ", dirname)
 		files, err := ioutil.ReadDir(dirname)
