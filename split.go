@@ -112,7 +112,10 @@ func split(patterns []string) error {
 				runWriter.writer = w
 				runWriters[run] = runWriter
 			}
-			record.Marshal(runWriter.writer)
+			if err := record.Marshal(runWriter.writer); err != nil {
+				return err
+			}
+			runWriter.eventCount++
 			runWriter.lastRecord = record.Nevent()
 		}
 		return nil
