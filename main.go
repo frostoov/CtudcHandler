@@ -17,7 +17,7 @@ import (
 
 type appConfig struct {
 	CtudcRoot string  `json:"ctudc_root"`
-	NevodRoot string  `json:"nevod_root"	`
+	NevodRoot string  `json:"nevod_root"`
 	Speed     float64 `json:"speed"`
 	Offset    uint    `json:"offset"`
 }
@@ -45,7 +45,8 @@ func formatRunDir(run int) string {
 }
 
 func formatCtudcFilename(root string, run, fileno int) string {
-	return path.Join(root, fmt.Sprintf("ctudc_%05d_%08d.tds", run, fileno))
+	ctudcSubdir := formatCtudcSubdir(root, run)
+	return path.Join(ctudcSubdir, fmt.Sprintf("ctudc_%05d_%08d.tds", run, fileno))
 }
 
 func formatCtudcSubdir(root string, run int) string {
