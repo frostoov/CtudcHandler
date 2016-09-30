@@ -86,10 +86,10 @@ func split(patterns []string) error {
 				filename := formatCtudcFilename(run, 0)
 
 				f, err := os.Create(filename)
-				log.Println("Created: ", filename)
 				if err != nil {
 					return err
 				}
+				log.Println("Created: ", filename)
 				w := bufio.NewWriter(f)
 				w.WriteString(header)
 				runWriter = &RunData{
@@ -105,13 +105,14 @@ func split(patterns []string) error {
 				if err != nil {
 					return err
 				}
-				runWriter.file = f
+				log.Println("Created: ", filename)
 				w := bufio.NewWriter(f)
-				w.WriteString("TDSa\n")
+				w.WriteString(header)
+				runWriter.file = f
 				runWriter.writer = w
-				record.Marshal(runWriter.writer)
-				runWriter.eventCount++
+				runWriters[run] = runWriter
 			}
+			record.Marshal(runWriter.writer)
 			runWriter.lastRecord = record.Nevent()
 		}
 		return nil
