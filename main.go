@@ -53,13 +53,8 @@ func formatCtudcSubdir(run int) string {
 	return path.Join(formatRunDir(run), fmt.Sprintf("ctudc_%05d", run))
 }
 
-func formatNevodSubdir(run int) string {
-	root := formatNevodRunDir(run)
-	return path.Join(root, fmt.Sprintf("NAD_%03d", run))
-}
-
 func formatNevodRunDir(run int) string {
-	return path.Join(appConf.NevodRoot, "NAD", fmt.Sprintf("NAD_%03d", run))
+	return path.Join(appConf.NevodRoot, fmt.Sprintf("NAD_%03d", run))
 }
 
 func parseRuns(runList string) ([]int, error) {
