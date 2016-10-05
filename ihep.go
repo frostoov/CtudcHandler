@@ -161,7 +161,7 @@ func (h *IhepHandler) handleRun(root string) error {
 			if singleDepth(ds[cham]) {
 				stats.sevents++
 
-				t1, t2, t3, t4 := times[0][0], times[0][1], times[0][2], times[0][3]
+				t1, t2, t3, t4 := times[0][0], times[1][0], times[2][0], times[3][0]
 				k1 := t1 - t2 - t3 + t4
 				k2 := t1 - 3*t2 + 3*t3 - t4
 
