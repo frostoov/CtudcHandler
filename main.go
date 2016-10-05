@@ -44,29 +44,22 @@ func formatRunDir(run int) string {
 	return path.Join(appConf.CtudcRoot, fmt.Sprintf("run_%05d", run))
 }
 
-func formatCtudcFilename(root string, run, fileno int) string {
-	ctudcSubdir := formatCtudcSubdir(root, run)
+func formatCtudcFilename(run, fileno int) string {
+	ctudcSubdir := formatCtudcSubdir(run)
 	return path.Join(ctudcSubdir, fmt.Sprintf("ctudc_%05d_%08d.tds", run, fileno))
 }
 
-func formatCtudcSubdir(root string, run int) string {
-	return path.Join(root, fmt.Sprintf("ctudc_%05d", run))
+func formatCtudcSubdir(run int) string {
+	return path.Join(formatRunDir(run), fmt.Sprintf("ctudc_%05d", run))
 }
 
-func formatNevodSubdir(root string, run int) string {
+func formatNevodSubdir(run int) string {
+	root := formatNevodRunDir(run)
 	return path.Join(root, fmt.Sprintf("NAD_%03d", run))
 }
 
 func formatNevodRunDir(run int) string {
 	return path.Join(appConf.NevodRoot, "NAD", fmt.Sprintf("NAD_%03d", run))
-}
-
-func parseDirs(dirs string) ([]string, error) {
-	dirList := strings.Split(dirs, ",")
-	for i, str := range dirList {
-		dirList[i] = strings.TrimSpace(str)
-	}
-	return dirList, nil
 }
 
 func parseRuns(runList string) ([]int, error) {
