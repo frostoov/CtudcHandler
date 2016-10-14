@@ -55,7 +55,7 @@ func split(patterns []string) error {
 		s, err := trek.NewScanner(f)
 		if err != nil {
 			return err
-		} else if s.Header() == "TDSdrop\n" {
+		} else if s.Header() == "TDSdrop" {
 			log.Printf("Skipping drop\n")
 			return nil
 		}

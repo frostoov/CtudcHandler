@@ -1,7 +1,6 @@
 package trek
 
 import (
-	"fmt"
 	"math"
 
 	geo "github.com/frostoov/CtudcHandler/math"
@@ -62,13 +61,12 @@ func NewChamber(chamDesc ChamberDesc) *Chamber {
 // LineProjection проецирует прямую на фронтальную плоскость камеры.
 func (c *Chamber) LineProjection(l geo.Line3) geo.Line2 {
 	l = c.coord.ConvertLine(l)
-	fmt.Println(l)
 	return geo.NewLine2Vec(geo.Vec2{X: l.Point.X, Y: l.Point.Y}, geo.Vec2{X: l.Vector.X, Y: l.Vector.Y})
 }
 
 // TimesDepth возвращает наименьшую "глубину" измерений для 4 проволок.
 func (c *Chamber) TimesDepth(times *ChamTimes) int {
-    depth := -1
+	depth := -1
 	for wire := range times {
 		wireDepth := 0
 		for _, t := range times[wire] {
