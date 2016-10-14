@@ -9,10 +9,16 @@ import (
 	"log"
 	"math"
 	"os"
+	path "path/filepath"
 
 	geo "github.com/frostoov/CtudcHandler/math"
 	"github.com/frostoov/CtudcHandler/trek"
 )
+
+var validHandlers = map[string]bool{
+	"TDS_ext\n":  true,
+	"TDSext_m\n": true,
+}
 
 type Handler struct {
 	chambers    map[int]*trek.Chamber
@@ -55,9 +61,8 @@ func (h *Handler) Close() {
 
 func (h *Handler) Handle(runs []int) error {
 	for _, run := range runs {
-		root := formatRunDir(run)
-		log.Println("Processing ", root)
-		if err := h.handleRun(root); err != nil {
+		log.Println("Processing ", run)
+		if err := h.handleRun(run); err != nil {
 			log.Println("Failed:", err)
 		} else {
 			log.Println("Success")
@@ -66,19 +71,22 @@ func (h *Handler) Handle(runs []int) error {
 	return nil
 }
 
-func (h *Handler) handleRun(root string) error {
-	chambers, err := readChambers(root + "/chambers.conf.new")
+func (h *Handler) handleRun(run int) error {
+	root := formatRunDir(run)
+	chambers, err := readChambers(path.Join(root, "/chambers.conf.new"))
 	if err != nil {
 		return fmt.Errorf("Failed read chamber config: %s", err)
 	}
-	f, err := os.Open(root + "/extctudc.tds")
+	f, err := os.Open(path.Join(root, fmt.Sprintf("extctudc_%05d.tds", run)))
 	if err != nil {
 		return fmt.Errorf("Failed open extctudc.tds: %s", err)
 	}
 	defer f.Close()
 	r := bufio.NewReader(f)
-	if header, err := r.ReadString('\n'); err != nil || header != "TDSext\n" {
-		return fmt.Errorf("Invalid header of extctudc.tds")
+	if header, err := r.ReadString('\n'); err != nil || !validHandlers[header] {
+		return fmt.Errorf("Invalid header of extctudc.tds %s", header)
+	} else if header == "TDSext_m\n" {
+		new(trek.ExtHeader).Unmarshal(r)
 	}
 	var record trek.ExtEvent
 	for record.Unmarshal(r) == nil {

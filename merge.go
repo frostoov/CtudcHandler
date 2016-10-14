@@ -257,12 +257,13 @@ func mergeRun(run int) error {
 	if err != nil {
 		return fmt.Errorf("Failed open nevod data: %s", err)
 	}
-	output, err := os.Create(extData)
+	f, err := os.Create(extData)
 	if err != nil {
 		return fmt.Errorf("Failed create output file: %s", err)
 	}
-	defer output.Close()
-	w := bufio.NewWriter(output)
+	w := bufio.NewWriter(f)
+	defer f.Close()
+	defer w.Flush()
 	w.WriteString("TDSext_m\n")
 	if err := meta.Marshal(w); err != nil {
 		return fmt.Errorf("failed marshal file header %v", err)

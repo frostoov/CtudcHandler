@@ -3,6 +3,7 @@ package trek
 import (
 	"bufio"
 	"io"
+	"strings"
 	"time"
 )
 
@@ -19,7 +20,7 @@ func readHeader(r *bufio.Reader) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	header = header[:len(header)-2]
+	header = strings.TrimSpace(header)
 	return header, nil
 }
 
